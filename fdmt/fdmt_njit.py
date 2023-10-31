@@ -1,0 +1,41 @@
+import numpy as np
+from numba import njit, jit, set_num_threads, prange
+
+@njit(parallel=True)
+def fdmt_iter_par(fs, nchan, df, Q, src, dest, i, fmin, fmax, maxDT):
+
+    set_num_threads(4)
+    if i == 0:
+        print('changes')
+    T = src.shape[1]
+    dF = df * 2**i
+    f_starts = fs[:: 2**i]
+    f_ends = f_starts + dF
+    f_mids = fs[2 ** (i - 1) :: 2**i]
+    for i_F in range(nchan // 2**i):
+        f0 = f_starts[i_F]
+        f1 = f_mids[i_F]
+        f2 = f_ends[i_F]
+        # Using cor = df seems to give the best behaviour at high DMs, judging from
+        # presto output. Nevertheless it may be worth adjusting this option
+        # for a specific use case
+        cor = df if i > 1 else 0
+
+        C = (f1**-2 - f0**-2) / (f2**-2 - f0**-2)
+        C01 = ((f1 - cor) ** -2 - f0**-2) / (f2**-2 - f0**-2)
+        C12 = ((f1 + cor) ** -2 - f0**-2) / (f2**-2 - f0**-2)
+
+        #SDT
+        loc = f0**-2 - (f0 + dF) ** -2
+        glo = fmin**-2 - fmax**-2
+        #R = np.ceil((maxDT- 1) * loc / glo).astype(int) + 1
+        R = int((maxDT- 1) * loc / glo) + 2
+
+        for i_dT in prange(0, R):
+
+            dT_mid01 = round(i_dT * C01)
+            dT_mid12 = round(i_dT * C12)
+            dT_rest = i_dT - dT_mid12
+            dest[Q[i][i_F] + i_dT, :] = src[Q[i - 1][2 * i_F] + dT_mid01, :]
+            dest[Q[i][i_F] + i_dT, dT_mid12:] += src[
+                Q[i - 1][2 * i_F + 1] + dT_rest, : T - dT_mid12]
