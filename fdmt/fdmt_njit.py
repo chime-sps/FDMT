@@ -1,10 +1,10 @@
 import numpy as np
-from numba import njit, jit, set_num_threads, prange
+from numba import njit, set_num_threads, prange
 
 @njit(parallel=True)
-def fdmt_iter_par(fs, nchan, df, Q, src, dest, i, fmin, fmax, maxDT):
+def fdmt_iter_par(fs, nchan, df, Q, src, dest, i, fmin, fmax, maxDT, num_threads):
 
-    set_num_threads(16)
+    set_num_threads(num_threads)
     T = src.shape[1]
     dF = df * 2**i
     f_starts = fs[:: 2**i]
@@ -26,7 +26,6 @@ def fdmt_iter_par(fs, nchan, df, Q, src, dest, i, fmin, fmax, maxDT):
         #SDT
         loc = f0**-2 - (f0 + dF) ** -2
         glo = fmin**-2 - fmax**-2
-        #R = np.ceil((maxDT- 1) * loc / glo).astype(int) + 1
         R = int((maxDT- 1) * loc / glo) + 2
 
         for i_dT in prange(0, R):

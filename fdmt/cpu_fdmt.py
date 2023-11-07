@@ -23,11 +23,14 @@ class FDMT:
     maxDT: int
         Number of time samples corresponding to the maximum delay between the
         top and bottom of the band (defines the maximum DM of the search)
+    num_threads: int
+        Number of threads to use for parallelization. If 1, no parallelization
     '''
     fmin: float = attrib(default=400.1953125)
     fmax: float = attrib(default=800.1953125)
     nchan: int = attrib(default=1024)
     maxDT: int = attrib(default=2048)
+    num_threads: int = attrib(default=1)
     A: np.ndarray = attrib(default=None, eq=cmp_using(eq=np.array_equal))
     B: np.ndarray = attrib(default=None, eq=cmp_using(eq=np.array_equal))
     df: float = attrib(init=False)
@@ -89,6 +92,8 @@ class FDMT:
             at the beginning of the dedispersed time series.
         retDMT: bool
             Whether to return the DM transform instead of the SNRs.
+        num_threads: int
+            Number of threads to use for parallelization. If 1, no parallelization
 
         Returns
         =======
@@ -178,8 +183,9 @@ class FDMT:
         fmin = self.fmin
         fmax = self.fmax
         maxDT = self.maxDT
+        num_threads = self.num_threads
 
-        fdmt_iter_par(fs, nchan, df, Q, src, dest, i, fmin, fmax, np.float32(maxDT))
+        fdmt_iter_par(fs, nchan, df, Q, src, dest, i, fmin, fmax, np.float32(maxDT), num_threads)
 
 
     def reset_ABQ(self):
