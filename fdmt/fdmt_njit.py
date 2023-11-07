@@ -1,8 +1,25 @@
-import numpy as np
 from numba import njit, set_num_threads, prange
 
 @njit(parallel=True)
 def fdmt_iter_par(fs, nchan, df, Q, src, dest, i, fmin, fmax, maxDT, num_threads):
+    """
+    Perform a single iteration of the Fast Dispersion Measure Transform (FDMT) algorithm in parallel.
+
+    Parameters:
+    fs (ndarray): Array of center frequencies for each channel.
+    nchan (int): Number of frequency channels.
+    df (float): Frequency resolution.
+    Q (list): List of indices for each frequency channel.
+    src (ndarray): Input data array.
+    dest (ndarray): Output data array.
+    i (int): Iteration index.
+    fmin (float): Minimum frequency.
+    fmax (float): Maximum frequency.
+    maxDT (int): Maximum time delay.
+    num_threads (int): Number of threads to use for parallelization.
+
+    Returns: None
+    """
 
     set_num_threads(num_threads)
     T = src.shape[1]
