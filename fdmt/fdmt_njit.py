@@ -4,9 +4,7 @@ from numba import njit, jit, set_num_threads, prange
 @njit(parallel=True)
 def fdmt_iter_par(fs, nchan, df, Q, src, dest, i, fmin, fmax, maxDT):
 
-    set_num_threads(4)
-    if i == 0:
-        print('changes')
+    set_num_threads(16)
     T = src.shape[1]
     dF = df * 2**i
     f_starts = fs[:: 2**i]
