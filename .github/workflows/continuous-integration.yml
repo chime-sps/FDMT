@@ -1,0 +1,91 @@
+name: Continuous Integration
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - 'docs/**'
+  pull_request:
+    branches: [main]
+    paths-ignore:
+      - 'docs/**'
+
+env:
+  ENV PIP_NO_CACHE_DIR: true
+  ENV OPENMP_ENABLED: 0
+  PYTHONUNBUFFERED: 1
+  PYTHONDONTWRITEBYTECODE: 1
+  PIP_NO_CACHE_DIR: true
+  PIP_DISABLE_PIP_VERSION_CHECK: on
+  PIP_DEFAULT_TIMEOUT: 100
+  POETRY_VERSION: 1.6.1
+  POETRY_NO_INTERACTION: 1
+  DEBIAN_FRONTEND: noninteractive
+  PYTHON_KEYRING_BACKEND: keyring.backends.null.Keyring
+
+jobs:
+  pre-commit-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup code repository
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 1
+      - name: Setup Python 3.8
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.8
+      - name: Load cached pre-commit repos
+        id: cached-pre-commit-repos
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.cache/pre-commit
+          key: precommit-${{ runner.os }}-${{ hashFiles('.pre-commit-config.yaml') }}
+      - name: Get all changed files
+        id: changed-files
+        uses: tj-actions/changed-files@v36
+      - name: Setup ssh agent
+        uses: webfactory/ssh-agent@v0.4.1
+        with:
+            ssh-private-key: ${{ secrets.SPS_SSH_ID }}
+      - name: Perform pre-commit checks
+        run: |
+            pip install pre-commit
+            pre-commit run --files ${{ steps.changed-files.outputs.all_changed_files }}
+  github-tests:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+    strategy:
+      matrix:
+        python-version: [ "3.8" ]
+    steps:
+      - name: Setup code repository
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 1
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+            python-version: ${{ matrix.python-version }}
+      - name: Install poetry
+        run: |
+          pip install poetry==$POETRY_VERSION
+      - name: Setup ssh agent
+        uses: webfactory/ssh-agent@v0.4.1
+        with:
+            ssh-private-key: ${{ secrets.SPS_SSH_ID }}
+      - name: Install linux-dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -yqq --no-install-recommends curl ssh git build-essential
+      - name: Install requirements
+        run: |
+          poetry install
+      - name: Run tests
+        run: |
+          echo "Running tests!"
+          poetry run pytest
+          echo "Finished running tests!"
