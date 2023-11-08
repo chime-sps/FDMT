@@ -3,7 +3,11 @@ name = "fdmt"
 version = "0.1.0"
 description = "Fast Dispersion Measure Transform (FDMT) for SPS"
 authors = ["CHIME SPS <chime_spawg@physics.mcgill.>"]
+license = "MIT"
 readme = "README.md"
+exclude = [
+    "tests"
+]
 
 [tool.poetry.dependencies]
 python = ">=3.8,<3.12"
@@ -15,6 +19,11 @@ pytz = "^2023.3"
 scipy = "^1.10.1"
 numba = "^0.58.1"
 
+[tool.poetry.group.dev.dependencies]
+commitizen = "^3.4.0"
+mypy = "^1.4.0"
+pre-commit = "^3.3.3"
+pytest = "^7.3.2"
 
 [build-system]
 requires = ["poetry-core"]
