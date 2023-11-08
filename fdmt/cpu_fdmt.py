@@ -185,7 +185,15 @@ class FDMT:
         maxDT = self.maxDT
         num_threads = self.num_threads
 
-        fdmt_iter_par(fs, nchan, df, Q, src, dest, i, fmin, fmax, np.float32(maxDT), num_threads)
+        # Wrap Q in a numpy array, rather than list of lists
+        # Makes it compliant with numba 
+        L = len(Q)
+        Qarr = np.empty( shape=(L, len(Q[0])), dtype=np.uint32 )
+        for i in range(L):
+            Qi = np.array(Q[i])
+            Qarr[i, :len(Qi)] = Qi
+
+        fdmt_iter_par(fs, nchan, df, Qarr, src, dest, i, fmin, fmax, np.float32(maxDT), num_threads)
 
 
     def reset_ABQ(self):
