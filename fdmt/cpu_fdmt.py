@@ -4,7 +4,8 @@ import sys
 import numpy as np
 from time import time
 from attr import attrs, attrib, cmp_using
-
+#from . import fdmt_iter_par
+from .fdmt_njit import fdmt_iter_par
 @attrs
 class FDMT:
     '''
@@ -22,11 +23,14 @@ class FDMT:
     maxDT: int
         Number of time samples corresponding to the maximum delay between the
         top and bottom of the band (defines the maximum DM of the search)
+    num_threads: int
+        Number of threads to use for parallelization. If 1, no parallelization
     '''
     fmin: float = attrib(default=400.1953125)
     fmax: float = attrib(default=800.1953125)
     nchan: int = attrib(default=1024)
     maxDT: int = attrib(default=2048)
+    num_threads: int = attrib(default=1)
     A: np.ndarray = attrib(default=None, eq=cmp_using(eq=np.array_equal))
     B: np.ndarray = attrib(default=None, eq=cmp_using(eq=np.array_equal))
     df: float = attrib(init=False)
@@ -88,6 +92,8 @@ class FDMT:
             at the beginning of the dedispersed time series.
         retDMT: bool
             Whether to return the DM transform instead of the SNRs.
+        num_threads: int
+            Number of threads to use for parallelization. If 1, no parallelization
 
         Returns
         =======
@@ -168,33 +174,19 @@ class FDMT:
             # A[Q[0][:t]+i,i:] /= int(i+1)
             self.A[self.Q[0][:t] + i, i:] /= int(i + 1)
 
-
     def fdmt_iteration(self, src, dest, i):
-        T = src.shape[1]
-        dF = self.df * 2**i
-        f_starts = self.fs[:: 2**i]
-        f_ends = f_starts + dF
-        f_mids = self.fs[2 ** (i - 1) :: 2**i]
-        for i_F in range(self.nchan // 2**i):
-            f0 = f_starts[i_F]
-            f1 = f_mids[i_F]
-            f2 = f_ends[i_F]
-            # Using cor = df seems to give the best behaviour at high DMs, judging from
-            # presto output. Nevertheless it may be worth adjusting this option
-            # for a specific use case
-            cor = self.df if i > 1 else 0
+        df = self.df
+        fs = self.fs
+        nchan = self.nchan
+        Q = self.Q
+        subDT = self.subDT
+        fmin = self.fmin
+        fmax = self.fmax
+        maxDT = self.maxDT
+        num_threads = self.num_threads
 
-            C = (f1**-2 - f0**-2) / (f2**-2 - f0**-2)
-            C01 = ((f1 - cor) ** -2 - f0**-2) / (f2**-2 - f0**-2)
-            C12 = ((f1 + cor) ** -2 - f0**-2) / (f2**-2 - f0**-2)
-            for i_dT in range(self.subDT(f0, dF)):
-                dT_mid01 = round(i_dT * C01)
-                dT_mid12 = round(i_dT * C12)
-                dT_rest = i_dT - dT_mid12
-                dest[self.Q[i][i_F] + i_dT, :] = src[self.Q[i - 1][2 * i_F] + dT_mid01, :]
-                dest[self.Q[i][i_F] + i_dT, dT_mid12:] += src[
-                    self.Q[i - 1][2 * i_F + 1] + dT_rest, : T - dT_mid12
-                ]
+        fdmt_iter_par(fs, nchan, df, Q, src, dest, i, fmin, fmax, np.float32(maxDT), num_threads)
+
 
     def reset_ABQ(self):
         self.A = None
