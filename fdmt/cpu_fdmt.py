@@ -4,7 +4,6 @@ import sys
 import numpy as np
 from time import time
 from attr import attrs, attrib, cmp_using
-#from . import fdmt_iter_par
 from .fdmt_njit import fdmt_iter_par
 @attrs
 class FDMT:
@@ -194,7 +193,6 @@ class FDMT:
             Qarr[i, :len(Qi)] = Qi
 
         fdmt_iter_par(fs, nchan, df, Qarr, src, dest, i, fmin, fmax, np.float32(maxDT), num_threads)
-
 
     def reset_ABQ(self):
         self.A = None
