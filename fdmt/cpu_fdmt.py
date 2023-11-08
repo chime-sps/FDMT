@@ -4,7 +4,6 @@ import sys
 import numpy as np
 from time import time
 from attr import attrs, attrib, cmp_using
-#from . import fdmt_iter_par
 from .fdmt_njit import fdmt_iter_par
 @attrs
 class FDMT:
@@ -59,10 +58,11 @@ class FDMT:
 
 
     def buildQ(self):
-        self.Q = []
         for i in range(int(np.log2(self.nchan)) + 1):
             needed = self.subDT(self.fs[:: 2**i], self.df * 2**i)
-            self.Q.append(np.cumsum(needed) - needed)
+            if i == 0:
+                self.Q = np.zeros((int(np.log2(self.nchan)) + 1, len(needed)), dtype=np.uint32)
+            self.Q[i, :len(needed)] = np.cumsum(needed) - needed
 
 
     def prep(self, cols, dtype=np.uint32):
@@ -185,15 +185,7 @@ class FDMT:
         maxDT = self.maxDT
         num_threads = self.num_threads
 
-        # Wrap Q in a numpy array, rather than list of lists
-        # Makes it compliant with numba 
-        L = len(Q)
-        Qarr = np.empty( shape=(L, len(Q[0])), dtype=np.uint32 )
-        for i in range(L):
-            Qi = np.array(Q[i])
-            Qarr[i, :len(Qi)] = Qi
-
-        fdmt_iter_par(fs, nchan, df, Qarr, src, dest, i, fmin, fmax, np.float32(maxDT), num_threads)
+        fdmt_iter_par(fs, nchan, df, Q, src, dest, i, fmin, fmax, np.float32(maxDT), num_threads)
 
 
     def reset_ABQ(self):
