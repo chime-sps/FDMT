@@ -61,9 +61,9 @@ class FDMT:
         for i in range(int(np.log2(self.nchan)) + 1):
             needed = self.subDT(self.fs[:: 2**i], self.df * 2**i)
             if i == 0:
-                self.Q = np.zeros((int(np.log2(self.nchan)) + 1, len(needed)), dtype=np.uint32)
+                self.Q = np.zeros((int(np.log2(self.nchan)) + 1, len(needed)), dtype='int32')
             self.Q[i, :len(needed)] = np.cumsum(needed) - needed
-
+            
 
     def prep(self, cols, dtype=np.uint32):
         "Prepares necessary matrices for FDMT"
