@@ -187,7 +187,6 @@ class FDMT:
 
         fdmt_iter_par(fs, nchan, df, Q, src, dest, i, fmin, fmax, np.float32(maxDT), num_threads)
 
-
     def reset_ABQ(self):
         self.A = None
         self.B = None
