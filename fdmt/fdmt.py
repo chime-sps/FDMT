@@ -10,8 +10,8 @@ import numpy.typing as npt
 # Subband delta time or delay time
 @numba.njit(parallel=True, boundscheck=False)  # type: ignore
 def subDT(
-    freqs: npt.NDArray[np.float32],
-    freqs_stepsize: np.float32,
+    freqs: npt.NDArray[np.float64],
+    freqs_stepsize: np.float64,
     min_freq_mhz: float,
     max_freq_mhz: float,
     max_time_samples: int,
@@ -41,8 +41,8 @@ def subDT(
 
 @numba.njit(parallel=True, boundscheck=False)  # type: ignore
 def buildQ(
-    freqs: npt.NDArray[np.float32],
-    freqs_stepsize: np.float32,
+    freqs: npt.NDArray[np.float64],
+    freqs_stepsize: np.float64,
     freq_channels: int,
     min_freq_mhz: float,
     max_freq_mhz: float,
@@ -65,7 +65,7 @@ def buildQ(
 
 @numba.njit(parallel=True, boundscheck=False)  # type: ignore
 def fdmt_iter_par(
-    fs: npt.NDArray[np.float32],
+    fs: npt.NDArray[np.float64],
     nchan: int,
     df: float,
     Q: npt.NDArray[np.int32],
@@ -81,7 +81,7 @@ def fdmt_iter_par(
     Perform a single iteration of the Fast Dispersion Measure Transform (FDMT)
 
     Args:
-        fs (npt.NDArray[np.float32]): Array of center frequencies for each channel.
+        fs (npt.NDArray[np.float64]): Array of center frequencies for each channel.
         nchan (int): Number of frequency channels.
         df (float): Frequency resolution.
         Q (npt.NDArray[np.int32]): List of indices for each frequency channel.
@@ -97,7 +97,7 @@ def fdmt_iter_par(
     numba.set_num_threads(threads)  # type: ignore
     T = src.shape[1]
     dF: float = df * 2**i
-    f_starts: npt.NDArray[np.float32] = fs[:: 2**i]
+    f_starts: npt.NDArray[np.float64] = fs[:: 2**i]
     f_ends = f_starts + dF
     f_mids = fs[2 ** (i - 1) :: 2**i]
     for i_F in range(nchan // 2**i):
