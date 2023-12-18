@@ -208,7 +208,7 @@ def fdmt(
     A[Q[0], :] = spectra
     commonDTs: npt.NDArray[np.int32] = np.ones(chDTs.min() - 1, dtype=np.int32) * spectra.shape[1]  # type: ignore
     DTsteps: npt.NDArray[np.int32] = np.where(chDTs[:-1] - chDTs[1:] != 0)[0]
-    DTplan: npt.NDArray[np.int32] = commonDTs + DTsteps[::-1]
+    DTplan: npt.NDArray[np.int32] = np.concatenate( (commonDTs, DTsteps[::-1]) )
 
     for i, t in enumerate(DTplan, 1):
         A[Q[0][:t] + i, i:] = A[Q[0][:t] + i - 1, i:] + spectra[:t, :-i]
