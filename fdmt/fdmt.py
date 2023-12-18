@@ -230,8 +230,8 @@ def fdmt(
         dest = fdmt_iter_par(
             fs=freqs,
             nchan=freq_channels,
-            df=int(freqs_stepsize),
-            Q=Q[i],
+            df=freqs_stepsize,
+            Q=Q,
             src=src,
             dest=dest,
             i=i,
