@@ -134,11 +134,11 @@ def fdmt(
     spectra: npt.NDArray[np.float32],
     min_freq_mhz: float = 400.1953125,
     max_freq_mhz: float = 800.1953125,
-    freq_channels: int = 1024,
+    freq_channels: int = 4096,
     max_time_samples: int = 2048,
-    frontpadding: bool = True,
+    frontpadding: bool = False,
     backpadding: bool = False,
-    threads: int = 1,
+    threads: int = 4,
 ) -> npt.NDArray[np.float32]:
     """Perform the Fast Dispersion Measure Transform (FDMT).
 
@@ -262,13 +262,13 @@ def fdmt(
 
 
 if __name__ == "__main__":
-    data = np.random.normal(size=(1024, 40960))
+    data = np.random.normal(size=(4096, 40960))
     data = data.astype(np.float32)
 
     start = time()
     fdmt(data)
     end = time()
-    print(f"Compile Iteration: {start - end}s")
+    print(f"Compile Iteration: {end - start}s")
     fdmt(data)
     end2 = time()
-    print(f"Execution Iteration: {end - end2}s")
+    print(f"Execution Iteration: {end2 - end}s")
