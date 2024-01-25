@@ -234,23 +234,6 @@ def fdmt(
 
     return dest[:max_time_samples][:, max_time_samples:]
 
-    # noiseRMS = np.array([DMT[i, i:].std() for i in range(max_time_samples)])
-    # noiseMean = np.array([DMT[i, i:].mean() for i in range(max_time_samples)])
-    # sigmi = ((DMT.T - noiseMean) / noiseRMS).max()
-
-    # No Trace Left Behind
-    # del (
-    #     freqs,
-    #     freqs_stepsize,
-    #     padding,
-    #     chDTs,
-    #     rows_A,
-    #     rows_B,
-    #     commonDTs,
-    #     DTsteps,
-    #     DTplan,
-    # )
-
 
 if __name__ == "__main__":
     data = np.random.normal(size=(4096, 40960))
