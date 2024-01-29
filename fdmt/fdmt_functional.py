@@ -232,7 +232,7 @@ def fdmt(
             threads=threads,
         )
 
-    return dest[:max_time_samples][:, max_time_samples:]
+    return dest[:max_time_samples]#[:, max_time_samples:]
 
 
 if __name__ == "__main__":
