@@ -3,87 +3,11 @@ name: Continuous Deployment
 on:
   push:
     branches:
-      - '*'
-  pull_request:
-    types:
-      - closed
-    branches:
       - main
-  delete:
 
 jobs:
-  build-and-push-image:
-    runs-on: self-hosted
-    if: ${{ github.event_name == 'push' }}
-    steps:
-      - name: Create Release
-        id: set-release
-        if: ${{ github.ref_name == 'main' }}
-        # Only create the automated release PR if pushing to main (won't be created if this is already the automated release PR)
-        uses: google-github-actions/release-please-action@v3
-        with:
-          release-type: python
-          package-name: ${{ github.event.repository.name }}
-      - name: Checkout code
-        id: set-code
-        if: ${{ (github.ref_name == 'main' && steps.set-release.outputs.release_created) || github.ref_name != 'main'}}
-        # Only perform next steps if now merging the automated release PR to main, or if not pushing to main
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 1
-      - name: Setup SSH Agent
-        if: ${{ (github.ref_name == 'main' && steps.set-release.outputs.release_created) || github.ref_name != 'main'}}
-        uses: webfactory/ssh-agent@v0.4.1
-        id: set-ssh
-        with:
-          ssh-private-key: ${{ secrets.SPS_SSH_ID }}
-      - name: Setup Docker Buildx
-        id: set-docker-buildx
-        if: ${{ (github.ref_name == 'main' && steps.set-release.outputs.release_created) || github.ref_name != 'main'}}
-        uses: docker/setup-buildx-action@v1
-        with:
-          install: true
-      - name: Perform DockerHub Login
-        id: set-dockerhub-login
-        if: ${{ (github.ref_name == 'main' && steps.set-release.outputs.release_created) || github.ref_name != 'main'}}
-        uses: docker/login-action@v1
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_PASSWORD }}
-      # Push two images, one with latest as tag (overwriting), and one with its version as tag (for future reference)
-      - name: Build Docker Image and Push to DockerHub
-        id: set-build-and-push-latest
-        if: ${{ (github.ref_name == 'main' && steps.set-release.outputs.release_created)}}
-        uses: docker/build-push-action@v3
-        with:
-          context: .
-          file: Dockerfile
-          target: runtime
-          tags: |
-            chimefrb/${{ github.event.repository.name }}:latest
-            chimefrb/${{ github.event.repository.name }}:${{ steps.set-release.outputs.tag_name }}
-          ssh: "github_ssh_id=${{ steps.set-ssh.outputs.SSH_AUTH_SOCK}}"
-          push: true
-      # Push the image with just its branch as tag
-      - name: Build Docker Image and Push to DockerHub
-        id: set-build-and-push-branch
-        if: ${{ github.ref_name != 'main'}}
-        uses: docker/build-push-action@v3
-        with:
-          context: .
-          file: Dockerfile
-          target: runtime
-          tags: |
-            chimefrb/${{ github.event.repository.name }}:${{ github.ref_name }}
-          ssh: "github_ssh_id=${{ steps.set-ssh.outputs.SSH_AUTH_SOCK}}"
-          push: true
-  delete-image:
-    runs-on: ubuntu-latest
-    # If a pull request is merged, or a branch is deleted, delete the associated DockerHub Image Tag
-    if: ${{ (github.event_name == 'pull_request' && github.event.pull_request.merged && github.actor != 'github-actions' && github.base_ref == 'main') || github.event.ref_type == 'branch'}}
-    steps:
-      - name: Delete Docker Image Tag of Branch from DockerHub
-        run: |
-          TAG='${{ github.head_ref || github.event.ref}}'
-          HUB_TOKEN=$(curl -s -H "Content-Type: application/json" -X POST -d "{\"username\": \"${{ secrets.DOCKERHUB_USERNAME }}\", \"password\": \"${{ secrets.DOCKERHUB_PASSWORD }}\"}" https://hub.docker.com/v2/users/login/ | jq -r .token)
-          curl -i -X DELETE \ -H "Accept: application/json" -H "Authorization: JWT $HUB_TOKEN" https://hub.docker.com/v2/namespaces/${{ secrets.DOCKERHUB_USERNAME }}/repositories/${{ github.event.repository.name }}/tags/$TAG/
+  release:
+    uses: chime-sps/sps-ops/.github/workflows/release.yml@main
+    secrets: inherit
+    with:
+      event_repository: ${{ github.event.repository.name }}
