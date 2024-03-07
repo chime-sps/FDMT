@@ -10,4 +10,6 @@ jobs:
     uses: chime-sps/sps-ops/.github/workflows/release.yml@main
     secrets: inherit
     with:
-      event_repository: ${{ github.event.repository.name }}
+      ref_name: ${{ github.ref_name || 'none' }}
+      event_name: ${{ github.event_name || 'none'}}
+      event_repository: ${{ github.event.repository.name || 'none' }}
