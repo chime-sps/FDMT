@@ -1,5 +1,5 @@
-import numpy as np
 cimport numpy as np
+import numpy as np
 
 cpdef fdmt_iter_par(np.ndarray[np.float64_t, ndim=1] fs,
                     int nchan,
@@ -42,10 +42,7 @@ cpdef fdmt_iter_par(np.ndarray[np.float64_t, ndim=1] fs,
     f_starts = fs[:: int(2**i)]  # Cast the result of 2**i to int
     f_ends = f_starts + dF
     f_mids = fs[int(2 ** (i - 1)) :: int(2**i)]  # Cast the result of 2 ** (i - 1) to int
-    cdef int i_max
-    i_max = nchan // int(2**i)
-
-    for i_F in range(i_max):  # Cast the result of 2**i to int
+    for i_F in range(nchan // int(2**i)):  # Cast the result of 2**i to int
         f0 = f_starts[i_F]
         f1 = f_mids[i_F]
         f2 = f_ends[i_F]

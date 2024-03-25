@@ -137,6 +137,7 @@ def fdmt(
         # A[Q[0][:t]+i,i:] /= int(i+1)
         A[Q[0][:t] + i, i:] /= int(i + 1)"""
 
+    print(A.dtype, B.dtype, Q.dtype, DTplan.dtype, spectra.dtype)
     A = fdmtcy.buildA(A, B, Q, spectra, DTplan)
 
     for i in range(1, int(np.log2(freq_channels)) + 1):
