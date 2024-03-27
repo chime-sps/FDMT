@@ -38,6 +38,15 @@ def subDT(
     ) + np.int32(1)
     return dt
 
+@numba.njit(parallel=False, boundscheck=False)  # type: ignore
+def buildA(A: npt.NDArray[np.float32], Q: npt.NDArray[np.int32], spectra: npt.NDArray[np.float32], 
+           DTplan: npt.NDArray[np.int32]) -> npt.NDArray[np.float32]:
+    for i, t in enumerate(DTplan, 1):
+        A[Q[0][:t] + i, i:] = A[Q[0][:t] + i - 1, i:] + spectra[:t, :-i]
+    for i, t in enumerate(DTplan, 1):
+        # A[Q[0][:t]+i,i:] /= int(i+1)
+        A[Q[0][:t] + i, i:] /= int(i + 1)
+    return A
 
 @numba.njit(parallel=True, boundscheck=False)  # type: ignore
 def buildQ(
@@ -136,7 +145,7 @@ def fdmt(
     max_freq_mhz: float = 800.1953125,
     freq_channels: int = 4096,
     max_time_samples: int = 2048,
-    frontpadding: bool = False,
+    frontpadding: bool = True,
     backpadding: bool = False,
     threads: int = 4,
 ) -> npt.NDArray[np.float32]:
@@ -168,6 +177,15 @@ def fdmt(
     )
     freqs_stepsize: np.float32 = np.float32(np.NAN)
     # Compute Frequencies and Frequency Step Size
+
+    concat_tuple = [spectra]
+    if backpadding:
+        concat_tuple.append(np.zeros((freq_channels, max_time_samples), dtype=spectra.dtype))
+    if frontpadding:
+        # We need to add maxDT time samples to the front of I when
+        # frontpadding is desired, due to edge-related effects
+        concat_tuple.insert(0, np.zeros((freq_channels, max_time_samples), dtype=spectra.dtype))
+    spectra = np.concatenate(concat_tuple, axis=1)
 
     ### removed retstep, endpoint, dtype
     freqs = np.linspace(
@@ -201,11 +219,13 @@ def fdmt(
     DTsteps: npt.NDArray[np.int32] = np.where(chDTs[:-1] - chDTs[1:] != 0)[0]
     DTplan: npt.NDArray[np.int32] = np.concatenate( (commonDTs, DTsteps[::-1]) )
 
-    for i, t in enumerate(DTplan, 1):
+    """for i, t in enumerate(DTplan, 1):
         A[Q[0][:t] + i, i:] = A[Q[0][:t] + i - 1, i:] + spectra[:t, :-i]
     for i, t in enumerate(DTplan, 1):
         # A[Q[0][:t]+i,i:] /= int(i+1)
-        A[Q[0][:t] + i, i:] /= int(i + 1)
+        A[Q[0][:t] + i, i:] /= int(i + 1)"""
+
+    A = buildA(A, Q, spectra, DTplan)
 
     # for idx, timestep in np.ndenumerate(DTplan):
     #     idx = idx[0] + 1
@@ -232,7 +252,7 @@ def fdmt(
             threads=threads,
         )
 
-    return dest[:max_time_samples]#[:, max_time_samples:]
+    return dest[:max_time_samples][:, max_time_samples:]
 
 
 if __name__ == "__main__":
