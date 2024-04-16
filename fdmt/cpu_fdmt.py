@@ -26,6 +26,8 @@ class FDMT:
         top and bottom of the band (defines the maximum DM of the search)
     num_threads: int
         Number of threads to use for parallelization. If 1, no parallelization
+    corr_fac: float
+        Use corr_fac * df as correction factor
     """
 
     fmin: float = attrib(default=400.1953125)
@@ -33,6 +35,7 @@ class FDMT:
     nchan: int = attrib(default=1024)
     maxDT: int = attrib(default=2048)
     num_threads: int = attrib(default=1)
+    corr_fac: float = attrib(default=1)
     A: np.ndarray = attrib(default=None, eq=cmp_using(eq=np.array_equal))
     B: np.ndarray = attrib(default=None, eq=cmp_using(eq=np.array_equal))
     df: float = attrib(init=False)
@@ -192,7 +195,7 @@ class FDMT:
         num_threads = self.num_threads
 
         fdmt_iter_par(
-            fs, nchan, df, Q, src, dest, i, fmin, fmax, np.float32(maxDT), num_threads
+            fs, nchan, df, Q, src, dest, i, fmin, fmax, np.float32(maxDT), num_threads, corr_fac=self.corr_fac
         )
 
     def reset_ABQ(self):

@@ -2,7 +2,7 @@ from numba import njit, prange, set_num_threads
 
 
 @njit(parallel=True)
-def fdmt_iter_par(fs, nchan, df, Q, src, dest, i, fmin, fmax, maxDT, num_threads):
+def fdmt_iter_par(fs, nchan, df, Q, src, dest, i, fmin, fmax, maxDT, num_threads, corr_fac=1):
     """
     Perform a single iteration of the Fast Dispersion Measure Transform (FDMT)
     algorithm, parallelized using numba.
@@ -19,6 +19,7 @@ def fdmt_iter_par(fs, nchan, df, Q, src, dest, i, fmin, fmax, maxDT, num_threads
     fmax (float): Maximum frequency.
     maxDT (int): Maximum time delay.
     num_threads (int): Number of threads to use for parallelization.
+    corr_fac (float): Use corr_fac * df as correction factor
 
     Returns: None
     """
@@ -36,7 +37,7 @@ def fdmt_iter_par(fs, nchan, df, Q, src, dest, i, fmin, fmax, maxDT, num_threads
         # Using cor = df seems to give the best behaviour at high DMs, judging from
         # presto output. Nevertheless it may be worth adjusting this option
         # for a specific use case
-        cor = df if i > 1 else 0
+        cor = df * corr_fac if i > 1 else 0
 
         C = (f1**-2 - f0**-2) / (f2**-2 - f0**-2)
         C01 = ((f1 - cor) ** -2 - f0**-2) / (f2**-2 - f0**-2)
